@@ -1,21 +1,21 @@
-const { loadFiles } = require('../Tools/fileReader')
+import { logger } from '../Tools/customLogger.js'
+import { loadFiles } from '../Tools/fileReader.js'
+import { pathToFileURL } from 'url'
 
-async function loadCommands(client) {
+export async function loadCommands(client) {
+    await client.commands.clear()
+    let commandsArray = []
 
-    await client.commands.clear();
-    let commandsArray = [];
+    const Files = await loadFiles('Commands')
+    for (const file of Files) {
+        // Convert absolute path → file:// URL
+        const commandModule = await import(pathToFileURL(file).href)
+        const command = commandModule.default
 
-    const Files = await loadFiles('Commands');
+        client.commands.set(command.data.name, command)
+        commandsArray.push(command.data.toJSON())
+    }
 
-    Files.forEach((file) => {
-        const command = require(file);
-        client.commands.set(command.data.name, command);
-        commandsArray.push(command.data.toJSON());
-    });
-
-    client.application.commands.set(commandsArray);
-    return console.log(`Loaded ${Files.length} commands.`)
+    await client.application.commands.set(commandsArray)
+    logger("INFO", `Loaded ${Files.length} commands.`)
 }
-
-
-module.exports = { loadCommands }

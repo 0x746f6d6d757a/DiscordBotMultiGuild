@@ -1,27 +1,13 @@
-const { glob } = require('glob')
-const path = require('path')
+import { glob } from 'glob'
+import path from 'path'
 
-async function deleteCachedFile(file) {
-    const filePath = path.resolve(file)
-    if (require.cache[filePath]) delete require.cache[filePath]
-}
-
-async function loadFiles(dirName) {
-    
+export async function loadFiles(dirName) {
     try {
-
         const files = await glob(path.join(process.cwd(), dirName, "**/*.js").replace(/\\/g, "/"))
-        const jsFiles = files.filter( file => path.extname(file) === ".js")
-        
-        await Promise.all(jsFiles.map(deleteCachedFile))
+        const jsFiles = files.filter(file => path.extname(file) === ".js")
         return jsFiles
-
-    } catch(error) {
-
+    } catch (error) {
         console.error(`Error while loading files from directory ${dirName}: ${error}`)
         throw error
-
     }
 }
-
-module.exports = { loadFiles }

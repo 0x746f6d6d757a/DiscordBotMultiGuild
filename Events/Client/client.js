@@ -1,17 +1,16 @@
-const { Events, Client, ActivityType } = require('discord.js')
-const { loadCommands } = require('../../Utils/Handlers/commandHandler')
+import { Events, Client, ActivityType } from 'discord.js'
+import { loadCommands } from '../../Utils/Handlers/commandHandler.js'
+import { logger } from '../../Utils/Tools/customLogger.js'
 
-module.exports = {
+export default {
     name: Events.ClientReady,
     once: true,
     /**
      * @param {Client} client 
     */
     async execute(client) {
-        
         await loadCommands(client)
-        console.log(`Logged in as ${client.user.tag}!`);
-        client.user.setActivity({ name: `Watching over ${client.guilds.cache.size} servers`, type: ActivityType.Watching})
-
+        logger('INFO', `Logged in as ${client.user.tag}!`)
+        client.user.setActivity({ name: `Watching over ${client.guilds.cache.size} servers`, type: ActivityType.Watching })
     }
 }

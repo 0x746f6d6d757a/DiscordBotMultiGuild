@@ -1,23 +1,20 @@
-const { loadFiles } = require('../Tools/fileReader')
+import { logger } from '../Tools/customLogger.js'
+import { loadFiles } from '../Tools/fileReader.js'
+import { pathToFileURL } from 'url'
 
-async function loadEvents(client) {
-
+export async function loadEvents(client) {
     client.events = new Map()
+    const Files = await loadFiles('Events')
 
-    const Files = await loadFiles('Events');
-    for(const file of Files) {
+    for (const file of Files) {
+        const event = await import(pathToFileURL(file).href)
 
-        const event = require(file)
-        const execute = (...args) => event.execute(...args, client)
-        const target = event.rest ? client.rest : client
+        const execute = (...args) => event.default.execute(...args, client)
+        const target = event.default.rest ? client.rest : client
+        target[event.default.once ? "once" : "on"](event.default.name, execute)
 
-        target[event.once ? "once" : "on"](event.name, execute)
-        client.events.set(event.name, execute)
-
+        client.events.set(event.default.name, execute)
     }
 
-    console.log(`Events loaded: ${Files.length}`)
-
+    logger('INFO', `Loaded ${Files.length} events.`)
 }
-
-module.exports = { loadEvents }
