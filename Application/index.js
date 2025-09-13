@@ -1,7 +1,8 @@
 import { Client, GatewayIntentBits, Partials, Collection } from 'discord.js'
+import util from 'util'
+
 import { logger } from '../Utils/Tools/customLogger.js'
 import { loadEvents } from '../Utils/Handlers/eventHandler.js'
-
 const { Guilds, GuildMessages, MessageContent, GuildVoiceStates } = GatewayIntentBits
 const { User, Message, GuildMember, ThreadMember } = Partials
 
@@ -23,9 +24,9 @@ process.on('warning', (warning) => {
 })
 
 process.on('unhandledRejection', (reason, promise) => {
-    logger('ERROR', `Unhandled Rejection: ${reason.stack || reason} \n Promise: ${promise}`)
+    logger('ERROR', `Unhandled Rejection: ${util.inspect(reason, { depth: null })} \n Promise: ${util.inspect(promise, { depth: null })}`)
 })
 
 process.on('uncaughtException', (error) => {
-    logger('ERROR', `Uncaught Exception: ${error.stack || error}`)
+    logger('ERROR', `Uncaught Exception: ${util.inspect(error, { depth: null })}`)
 })

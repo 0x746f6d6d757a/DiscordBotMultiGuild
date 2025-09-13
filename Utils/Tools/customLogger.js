@@ -5,7 +5,7 @@ import chalk from 'chalk'
  * @param {string} message
  */
 export function logger(level, message) {
-    const currentTimestamp = `[${new Date().toISOString()}]`
+    const currentTimestamp = dateFormatter()
     switch (level) {
         case "INFO":
             console.log(`${chalk.white(`${currentTimestamp} [INFO]`)} ${chalk.whiteBright(`${message}`)}`)
@@ -22,4 +22,18 @@ export function logger(level, message) {
         default:
             console.log(`${currentTimestamp} [UNKNOWN] ${message}`)
     }
+}
+
+function dateFormatter(date = new Date()) {
+
+    const pad = (n) => n.toString().padStart(2, '0')
+    const day = pad(date.getDate());
+    const month = pad(date.getMonth() + 1)
+    const year = date.getFullYear();
+
+    const hours = pad(date.getHours());
+    const minutes = pad(date.getMinutes());
+    const seconds = pad(date.getSeconds());
+
+    return `[${day}/${month}/${year} - ${hours}:${minutes}:${seconds}]`;
 }
