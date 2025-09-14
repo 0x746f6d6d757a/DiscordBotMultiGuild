@@ -4,7 +4,7 @@ import { logger } from '../Tools/customLogger'
 
 let databasePool = null
 let lastReconnectAttempt = 0
-const RECONNECT_INTERVAL = 10000 // 10 seconds
+const reconnectingInterval = 10000 // 10 seconds
 
 function delay(ms) { return new Promise(resolve => setTimeout(resolve, ms)) }
 
@@ -75,14 +75,14 @@ async function createNewPool() {
                 logger("DB_ERROR", "Database connection lost.")
 
                 const currentTime = Date.now()
-                if (currentTime - lastReconnectAttempt < RECONNECT_INTERVAL) {
+                if (currentTime - lastReconnectAttempt < reconnectingInterval) {
                     logger("DB_ERROR", "Reconnect attempt throttled, waiting...")
                     break
                 }
 
                 lastReconnectAttempt = currentTime
-                logger("DB", `Attempting to reconnect in ${RECONNECT_INTERVAL / 1000}s...`)
-                await delay(RECONNECT_INTERVAL)
+                logger("DB", `Attempting to reconnect in ${reconnectingInterval / 1000}s...`)
+                await delay(reconnectingInterval)
 
                 try {
                     
