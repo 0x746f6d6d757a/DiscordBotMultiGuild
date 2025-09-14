@@ -33,10 +33,10 @@ export default async function getDatabasePool() {
 
 export async function executeQuery(query, ...params) {
 
-    const databaseConnection = await getDatabasePool()
+    if (!databasePool) databasePool = await getDatabasePool()
 
     try {
-        const [ rows, fields ] = await databaseConnection.execute(query, params)
+        const [ rows, fields ] = await databasePool.execute(query, params)
         logger("DB", `Executed query: ${query} with ${params.length} params.`)
         return { rows, fields }
     } catch (error) {
@@ -72,23 +72,28 @@ async function createNewPool() {
 
             // Connection lost / network issues
             case 'PROTOCOL_CONNECTION_LOST':
-                logger("DB_ERROR", "Database connection was closed (connection lost).")
-                    if (Date.now() - lastReconnectAttempt > RECONNECT_INTERVAL) {
-                        lastReconnectAttempt = Date.now()
-                        logger("DB", "Attempting to reconnect to the database...")
-                    }
-                    await delay(RECONNECT_INTERVAL)
-                    try {
-                        await dbPool.getConnection()
-                        logger("DB", "Reconnected to the database successfully.")
-                    } catch (reconnectError) {
-                        logger("DB_ERROR", `Database reconnection attempt failed: ${reconnectError.message}`)
-                    }
+                logger("DB_ERROR", "Database connection lost.")
+
+                const currentTime = Date.now()
+                if (currentTime - lastReconnectAttempt < RECONNECT_INTERVAL) {
+                    logger("DB_ERROR", "Reconnect attempt throttled, waiting...")
+                    break
+                }
+
+                lastReconnectAttempt = currentTime
+                logger("DB", `Attempting to reconnect in ${RECONNECT_INTERVAL / 1000}s...`)
+                await delay(RECONNECT_INTERVAL)
+
+                try {
+                    
                     databasePool = null
                     await getDatabasePool()
-                    lastReconnectAttempt = Date.now()
-
+                    logger("DB", "Reconnected to the database successfully.")
+                } catch (reconnectError) {
+                    logger("DB_ERROR", `Database reconnection failed: ${reconnectError.message}`)
+                }
                 break
+
             case 'ECONNREFUSED':
                 logger("DB_ERROR", "Database connection refused (is the server running?).")
                 break
