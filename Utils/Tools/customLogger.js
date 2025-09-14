@@ -1,7 +1,7 @@
 import chalk from 'chalk'
 
 /**
- * @param {"INFO"|"WARN"|"ERROR"|"DEBUG"} level
+ * @param {"INFO"|"WARN"|"ERROR"|"DEBUG"|"DB_ERROR"|"DB"} level
  * @param {string} message
  */
 export function logger(level, message) {
@@ -10,11 +10,17 @@ export function logger(level, message) {
         case "INFO":
             console.log(`${chalk.white(`${currentTimestamp} [INFO]`)} ${chalk.whiteBright(`${message}`)}`)
             break
+        case "DB":
+            console.log(`${chalk.blue(`${currentTimestamp} [DB]`)} ${chalk.blueBright(`${message}`)}`)
+            break
         case "WARN":
             console.log(`${chalk.yellow(`${currentTimestamp} [WARN]`)} ${chalk.yellowBright(`${message}`)}`)
             break
         case "ERROR":
             console.log(`${chalk.red(`${currentTimestamp} [ERROR]`)} ${chalk.redBright(`${message}`)}`)
+            break
+        case "DB_ERROR":
+            console.log(`${chalk.red(`${currentTimestamp} [DB_ERROR]`)} ${chalk.redBright(`${message}`)}`)
             break
         case "DEBUG":
             console.log(`${chalk.gray(`${currentTimestamp} [DEBUG] ${message}`)}`)
