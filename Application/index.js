@@ -13,12 +13,15 @@ const client = new Client({
     partials: [User, Message, GuildMember, ThreadMember]
 })
 
+loadEvents(client)
+
+// Initialize collections
 client.events = new Collection()
 client.commands = new Collection()
 
-loadEvents(client)
 client.login(config.token)
 
+// Error Handling
 process.on('warning', (warning) => {
     logger('WARN', `Node.js Warning: ${warning.stack || warning}`)
 })
