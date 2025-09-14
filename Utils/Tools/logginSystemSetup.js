@@ -7,13 +7,13 @@ import { ChannelType, ChatInputCommandInteraction, PermissionFlagsBits, Permissi
 import { logger } from './customLogger.js'
 
 /**
- * @param {Object} guildConfig 
+ * @param {Object} config 
  * @param {ChatInputCommandInteraction} interaction
 */
-export async function setupLoggingSystem(config, interaction) {
+export default async function setupLoggingSystem(config, interaction) {
     const guild = interaction.guild
     const guildConfig = config[guild.id]
-    if (!guildConfig) return { message: `Please run the setup command first!` }
+    if (!guildConfig) return { message: `Please run the setup command first!`, isLogging: false }
 
     const loggerConfig = guildConfig.loggerSystem
     if (!loggerConfig.enabled) return { message: `Logging is not enabled for this server.`, isLogging: false }
@@ -23,6 +23,8 @@ export async function setupLoggingSystem(config, interaction) {
     const loggingCategoryID = loggerConfig.categoryParentID
     let categoryChannel = null
     if (!loggingCategoryID) {
+
+        logger("DEBUG", `No logging category found in guild ${guild.name} (${guild.id}), creating one...`)
 
         try {
 
@@ -38,6 +40,7 @@ export async function setupLoggingSystem(config, interaction) {
             return { message: `Failed to create logging category.`, error: err, isLogging: false }
         }
     } else {
+        logger("DEBUG", `Using existing logging category in guild ${guild.name} (${guild.id})`)
         categoryChannel = guild.channels.cache.get(loggingCategoryID)
     }
 
@@ -90,6 +93,8 @@ export async function setupLoggingSystem(config, interaction) {
 
     for (const channelName of channelsToCreate) {
         try {
+
+            logger("DEBUG", `Ensuring logging channel ${channelName} exists in guild ${guild.name} (${guild.id})`)
             let existingChannel = guild.channels.cache.find(c => c.name === channelName && c.parentId === categoryChannel.id)
             if (!existingChannel) {
                 existingChannel = await guild.channels.create({
