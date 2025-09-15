@@ -4,7 +4,7 @@ import { executeQuery } from "../../Utils/SQL/databaseManager.js"
 
 export default {
     data: new SlashCommandBuilder()
-        .setName('guildsetup')
+        .setName('guild_setup')
         .setDescription('Set up the guild configuration.'),
 
     /**

@@ -5,7 +5,7 @@ import { logger } from '../../Utils/Tools/customLogger.js';
 
 export default {
     data: new SlashCommandBuilder()
-        .setName('guildloggingsetup')
+        .setName('guild_logging_setup')
         .setDescription('Sets up the logging system for the guild.'),
     /**
      * 
