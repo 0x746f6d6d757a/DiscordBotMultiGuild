@@ -4,7 +4,7 @@ import chalk from 'chalk'
  * @param {"INFO"|"WARN"|"ERROR"|"DEBUG"|"DB_ERROR"|"DB"} level
  * @param {string} message
  */
-export function logger(level, message) {
+function logger(level, message) {
     const currentTimestamp = dateFormatter()
     switch (level) {
         case "INFO":
@@ -30,6 +30,7 @@ export function logger(level, message) {
     }
 }
 
+
 function dateFormatter(date = new Date()) {
 
     const pad = (n) => n.toString().padStart(2, '0')
@@ -43,3 +44,5 @@ function dateFormatter(date = new Date()) {
 
     return `[${day}/${month}/${year} - ${hours}:${minutes}:${seconds}]`;
 }
+
+export { logger }

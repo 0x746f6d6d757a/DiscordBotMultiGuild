@@ -1,6 +1,6 @@
 import { createPool, createConnection } from 'mysql2/promise'
+import { logger } from '../Tools/customLogger.js'
 import dbConfig from '../../Configs/database.json' with { type: 'json' }
-import { logger } from '../Tools/customLogger'
 
 let databasePool = null
 let lastReconnectAttempt = 0
@@ -66,7 +66,7 @@ async function createNewPool() {
         queueLimit: 0
     })
 
-    databasePool.on('error', async ( error ) => {
+    dbPool.on('error', async ( error ) => {
         
         switch (error.code) {
 

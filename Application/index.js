@@ -2,6 +2,7 @@ import { Client, GatewayIntentBits, Partials, Collection } from 'discord.js'
 import util from 'util'
 
 import { logger } from '../Utils/Tools/customLogger.js'
+
 import { loadEvents } from '../Utils/Handlers/eventHandler.js'
 const { Guilds, GuildMessages, MessageContent, GuildVoiceStates } = GatewayIntentBits
 const { User, Message, GuildMember, ThreadMember } = Partials
