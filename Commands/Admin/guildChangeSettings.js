@@ -2,6 +2,9 @@ import { SlashCommandBuilder, ChatInputCommandInteraction, MessageFlags, EmbedBu
 import config from '../../Configs/config.json' with { type: 'json' }
 import { executeQuery } from '../../Utils/SQL/databaseManager.js'
 import { logger } from '../../Utils/Tools/customLogger.js'
+import { camelCaseToTitle } from '../../Utils/Tools/stringManager.js'
+
+let guildSettingsArray = []
 
 export default {
     data: new SlashCommandBuilder()
@@ -13,20 +16,12 @@ export default {
     async execute(interaction) {
         if (!interaction.isCommand()) return
 
-        const SettingsEmbed = new EmbedBuilder()
-            .setTitle('Change Guild Settings')
-            .setAuthor({ name: interaction.guild.name, iconURL: interaction.guild.iconURL() })
-            .setDescription('Modify the settings for this guild using the dropdown menu below.')
-            .setColor(0x5865F2)
-            .setFooter({ text: config.developerInfo.username, iconURL: config.developerInfo.icon })
-            .setTimestamp()
-
         // Fetch current settings from the database
         const guildId = interaction.guild.id;
         const queryGuildExists = 'SELECT * FROM guilds WHERE guildId = ?';
         var { rows } = await executeQuery(queryGuildExists, guildId);
 
-        if (rows    .length === 0) {
+        if (rows.length === 0) {
             SettingsEmbed.setDescription('No settings found for this guild.\nPlease run the setup command first.');
             return interaction.reply({ embeds: [SettingsEmbed], flags: MessageFlags.Ephemeral });
         }
@@ -44,25 +39,31 @@ export default {
         let parsedSettings = Object.fromEntries(rows.map(row => [row.configType, JSON.parse(row.configSettings)]));
         logger("INFO", `Parsed settings for guild ${interaction.guild.name} (${interaction.guild.id}).`);
 
+        guildSettingsArray[guildId] = parsedSettings;
+
         // Create the Select Menu with the type of the configs as options to edit
         const selectMenuOptions = new StringSelectMenuBuilder()
 
         for (const [key, value] of Object.entries(parsedSettings)) {
-
             selectMenuOptions.addOptions({
                 label: camelCaseToTitle(key),
                 description: `Edit the ${key} settings.`,
                 value: key
             })
-
         }
 
         const selectMenu = new ActionRowBuilder()
             .addComponents(
-                selectMenuOptions.setCustomId('select_guild_setting')
-                .setPlaceholder('Select a setting to edit...')
+                selectMenuOptions.setCustomId('select_guild_setting').setPlaceholder('Select a setting to edit...')
             )
-
+        
+        const SettingsEmbed = new EmbedBuilder()
+            .setTitle('Change Guild Settings')
+            .setAuthor({ name: interaction.guild.name, iconURL: interaction.guild.iconURL() })
+            .setDescription('Modify the settings for this guild using the dropdown menu below.')
+            .setColor(0x5865F2)
+            .setFooter({ text: config.developerInfo.footerText, iconURL: config.developerInfo.icon })
+            .setTimestamp()
         
         logger("INFO", `Prepared settings embed and select menu for guild ${interaction.guild.name} (${interaction.guild.id}).`);
         await interaction.reply({ embeds: [SettingsEmbed], components: [selectMenu] });
@@ -70,6 +71,9 @@ export default {
     }
 }
 
-function camelCaseToTitle(str) {
-    return str.replace(/([A-Z])/g, ' $1').trim().replace(/\b\w/g, char => char.toUpperCase());
+export function getGuildSettings(guildId) {
+    return guildSettingsArray[guildId] 
 }
+
+
+

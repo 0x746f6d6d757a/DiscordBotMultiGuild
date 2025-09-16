@@ -22,8 +22,26 @@ export default async function getDatabasePool() {
 
     const [ databases ] = await tempConnection.query('SHOW DATABASES LIKE ?', [dbConfig.database])
     if (databases.length === 0) await tempConnection.query(`CREATE DATABASE \`${dbConfig.database}\``)
-    await tempConnection.end()
     logger("DB", "Database exists or was created successfully.")
+
+    await tempConnection.query(`USE \`${dbConfig.database}\`;`)
+
+    await tempConnection.query(`CREATE TABLE IF NOT EXISTS guilds (
+        guildId VARCHAR(32) PRIMARY KEY,
+        ownerId VARCHAR(32) NOT NULL,
+        isPaying TINYINT(1) DEFAULT 0
+    );`)
+
+    await tempConnection.query(`CREATE TABLE IF NOT EXISTS guild_configs (
+        configId INT AUTO_INCREMENT PRIMARY KEY,
+        guildId VARCHAR(32) NOT NULL,
+        configType VARCHAR(100) NOT NULL,
+        configSettings TEXT NOT NULL
+    );`)
+
+
+    logger("DB", "Ensured required tables exist.")
+    await tempConnection.end()
 
     databasePool = await createNewPool()
     logger("DB", "Created database connection pool.")

@@ -24,7 +24,8 @@ export default {
             id: developer.id,
             tag: developer.tag,
             icon: developerIcon,
-            username: developerUsername
+            username: developerUsername,
+            footerText: `Developed by ${developerUsername}`
         }
 
         // Write the developer information to the config file
