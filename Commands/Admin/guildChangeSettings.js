@@ -61,7 +61,7 @@ export default {
             .setTitle('Change Guild Settings')
             .setAuthor({ name: interaction.guild.name, iconURL: interaction.guild.iconURL() })
             .setDescription('Modify the settings for this guild using the dropdown menu below.')
-            .setColor(0x5865F2)
+            .setColor(0x47346E)
             .setFooter({ text: config.developerInfo.footerText, iconURL: config.developerInfo.icon })
             .setTimestamp()
         
