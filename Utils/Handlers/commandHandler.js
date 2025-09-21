@@ -8,8 +8,7 @@ export async function loadCommands(client) {
 
     const Files = await loadFiles('Commands')
     for (const file of Files) {
-        // Convert absolute path → file:// URL
-        const commandModule = await import(pathToFileURL(file).href)
+        const commandModule = await import(pathToFileURL(file).href + `?update=${Date.now()}`)
         const command = commandModule.default
 
         client.commands.set(command.data.name, command)

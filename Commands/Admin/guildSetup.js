@@ -1,6 +1,7 @@
 import { ChatInputCommandInteraction, EmbedBuilder, Message, MessageFlags, SlashCommandBuilder } from "discord.js"
 import { logger } from "../../Utils/Tools/customLogger.js"
 import { executeQuery } from "../../Utils/SQL/databaseManager.js"
+import config from '../../Configs/config.json' with { type: 'json' }
 
 export default {
     data: new SlashCommandBuilder()
@@ -36,23 +37,39 @@ export default {
         const defaultConfigQuery = `INSERT INTO guild_configs (guildId, configType, configSettings) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE configSettings = VALUES(configSettings)`
 
 
-        // loggerSystem config
+        // loggerSystem config : 100%
         let loggerConfig = {
             enabled: true,
             adminRoleId: null,
             categoryParentID: null,
             loggingLevel: 3
         }
-        await executeQuery(defaultConfigQuery, interaction.guild.id, 'loggerSystem', JSON.stringify(loggerConfig))
 
-        // ticketSystem config
+
+        new EmbedBuilder
+
+        await executeQuery(defaultConfigQuery, interaction.guild.id, 'loggerSystem', JSON.stringify(loggerConfig))
+        // ticketSystem config : 0%
         let ticketSystemConfig = {
             enabled: true,
-            categoryId: null,
-            staffRoleId: null,
+            generalCategoryID: null,
+            rolesInTicket: [],
+            usersInTicket: [`${interaction.guild.ownerId}`],
             ticketLimit: 1,
-            settings: [],
-            type: 1
+            embedMessage: {
+                author: { name: interaction.guild.name, icon_url: interaction.guild.iconURL() },
+                title: "Ticket System | Powered by Xylo",
+                description: "Please select a ticket category from the menu below.",
+                color: 0x0099ff,
+                footer: { text: config.developerInfo.footerText, icon_url: config.developerInfo.icon },
+                timestamp: Date.now(),
+            },
+            type: 0, // 0 = buttons, 1 = select menu
+            settings: [
+                { type: "buttons", categories: [] },
+                { type: "select", categories: [] }
+
+            ]
         }
         await executeQuery(defaultConfigQuery, interaction.guild.id, 'ticketSystem', JSON.stringify(ticketSystemConfig))
 
@@ -60,7 +77,7 @@ export default {
         let verificationSystemConfig = {
             enabled: false,
             type: 1,
-            roleId: null,
+
             channelId: null,
             messageId: null,
             settings: []

@@ -3,6 +3,8 @@ import { loadFiles } from '../Tools/fileReader.js'
 import { pathToFileURL } from 'url'
 
 export async function loadEvents(client) {
+    if(client.events) for (const [eventName, execute] of client.events) { client.removeListener(eventName, execute) }
+
     client.events = new Map()
     const Files = await loadFiles('Events')
 

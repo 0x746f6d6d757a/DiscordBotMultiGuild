@@ -17,7 +17,6 @@ export default {
 }
 
 /**
- * 
  * @param {ButtonInteraction} interaction 
  * @param {Client} client 
  * @returns 
@@ -32,8 +31,6 @@ async function buttonIteractionHandler(interaction, client) {
 
     const guildSettings = await loadGuildSettings(guildId)
     if (!guildSettings) return interaction.reply({ content: 'No guild settings found.', flags: MessageFlags.Ephemeral })
-
-    const settingsEmbed = EmbedBuilder.from(interaction.message.embeds[0])
 
     switch (system) {
         case 'loggerSystem':
@@ -84,9 +81,23 @@ async function buttonIteractionHandler(interaction, client) {
                     setCategoryModal.addComponents(new ActionRowBuilder().addComponents(categoryInput))
                     return await interaction.showModal(setCategoryModal)
 
-                    return interaction.reply({ content: 'Please mention the category channel in chat.', flags: MessageFlags.Ephemeral })
                 case 'setLoggingLevel':
-                    return interaction.reply({ content: 'Please enter the logging level (0-3) in chat.', flags: MessageFlags.Ephemeral })
+
+                    const setLoggingLevelModal = new ModalBuilder()
+                        .setCustomId(`${guildId}-loggerSystem-setLoggingLevel`)
+                        .setTitle('Set Logging Level (0-3)')
+
+                    const loggingLevelInput = new TextInputBuilder()
+                        .setCustomId(`${guildId}-loggerSystem-setLoggingLevel-input`)
+                        .setLabel('Enter the Logging Level (0-3)')
+                        .setStyle(TextInputStyle.Short)
+                        .setMaxLength(1)
+                        .setPlaceholder('Logging Level')
+                        .setRequired(true)
+
+                    setLoggingLevelModal.addComponents(new ActionRowBuilder().addComponents(loggingLevelInput))
+                    return await interaction.showModal(setLoggingLevelModal)
+
                 default:
                     logger('ERROR', `Unknown action for logger system: ${action}`)
                     return interaction.reply({ content: 'Unknown action.', flags: MessageFlags.Ephemeral })
@@ -170,6 +181,19 @@ async function modalSubmitHandler(interaction, client) {
                     logger('INFO', `Category channel for logger system set to ${categoryChannel.name} (${categoryChannel.id}) in guild ${interaction.guild.name} (${interaction.guild.id})`)
                     return updateLoggerSystemMessage(interaction, guildId, loggerSystemConfig, `Category channel has been set to ${categoryChannel.name}.`)
 
+                case 'setLoggingLevel':
+                    const loggingLevelInput = interaction.fields.getTextInputValue(`${guildId}-loggerSystem-setLoggingLevel-input`)
+                    const loggingLevel = parseInt(loggingLevelInput)
+
+                    if (isNaN(loggingLevel) || loggingLevel < 0 || loggingLevel > 3) {
+                        return interaction.reply({ content: 'Invalid logging level. Please enter a number between 0 and 3.', flags: MessageFlags.Ephemeral })
+                    }
+
+                    loggerSystemConfig.loggingLevel = loggingLevel
+                    await saveGuildSettings(guildId, guildSettings)
+                    logger('INFO', `Logging level for logger system set to ${loggingLevel} in guild ${interaction.guild.name} (${interaction.guild.id})`)
+                    return updateLoggerSystemMessage(interaction, guildId, loggerSystemConfig, `Logging level has been set to ${loggingLevel}.`)
+
                 default:
                     logger('ERROR', `Unknown action for logger system modal: ${action}`)
                     return interaction.reply({ content: 'Unknown action.', flags: MessageFlags.Ephemeral })
@@ -218,7 +242,7 @@ async function stringSelectMenuInteractionHandler(interaction, client) {
                     const enableOption = new ButtonBuilder()
                         .setCustomId(guildSettings[selectedSetting].enabled ? `${guildId}-loggerSystem-setDisable` : `${guildId}-loggerSystem-setEnable`)
                         .setLabel(guildSettings[selectedSetting].enabled ? 'Disable Logging' : 'Enable Logging')
-                        .setStyle(guildSettings[selectedSetting].enabled ? ButtonStyle.Danger : ButtonStyle.Success)
+                        .setStyle(ButtonStyle.Secondary)
 
                     const setAdminRoleOption = new ButtonBuilder()
                         .setCustomId(`${guildId}-loggerSystem-setAdminRole`)
@@ -243,7 +267,7 @@ async function stringSelectMenuInteractionHandler(interaction, client) {
                     const exitOption = new ButtonBuilder()
                         .setCustomId(`${guildId}-exit_settings`)
                         .setLabel('Return to Main Menu')
-                        .setStyle(ButtonStyle.Danger)
+                        .setStyle(ButtonStyle.Primary)
 
                     const firstButtonActionRow = new ActionRowBuilder().addComponents(enableOption, setAdminRoleOption, setCategoryOption, setLoggingLevelOption)
                     const secondButtonActionRow = new ActionRowBuilder().addComponents(saveOption, exitOption)
@@ -326,7 +350,7 @@ function createLoggerSystemButtons(guildId, loggerSystemConfig) {
     const enableOption = new ButtonBuilder()
         .setCustomId(loggerSystemConfig.enabled ? `${guildId}-loggerSystem-setDisable` : `${guildId}-loggerSystem-setEnable`)
         .setLabel(loggerSystemConfig.enabled ? 'Disable Logging' : 'Enable Logging')
-        .setStyle(loggerSystemConfig.enabled ? ButtonStyle.Danger : ButtonStyle.Success);
+        .setStyle(ButtonStyle.Secondary);
 
     const setAdminRoleOption = new ButtonBuilder()
         .setCustomId(`${guildId}-loggerSystem-setAdminRole`)
@@ -351,7 +375,7 @@ function createLoggerSystemButtons(guildId, loggerSystemConfig) {
     const exitOption = new ButtonBuilder()
         .setCustomId(`${guildId}-exit_settings`)
         .setLabel('Return to Main Menu')
-        .setStyle(ButtonStyle.Danger);
+        .setStyle(ButtonStyle.Primary);
 
     const firstButtonActionRow = new ActionRowBuilder().addComponents(enableOption, setAdminRoleOption, setCategoryOption, setLoggingLevelOption);
     const secondButtonActionRow = new ActionRowBuilder().addComponents(saveOption, exitOption);
@@ -372,7 +396,6 @@ async function updateLoggerSystemMessage(interaction, guildId, loggerSystemConfi
     
     if (replyMessage) {
         await interaction.reply({ content: replyMessage, flags: MessageFlags.Ephemeral });
-        // Find and update the original message
         const originalMessage = interaction.message || await interaction.fetchReply();
         if (originalMessage) await originalMessage.edit({ embeds: [embed], components: buttons });
         

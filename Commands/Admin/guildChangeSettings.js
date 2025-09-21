@@ -15,6 +15,7 @@ export default {
      */
     async execute(interaction) {
         if (!interaction.isCommand()) return
+        console.log(interaction.command.id);
 
         // Fetch current settings from the database
         const guildId = interaction.guild.id;
