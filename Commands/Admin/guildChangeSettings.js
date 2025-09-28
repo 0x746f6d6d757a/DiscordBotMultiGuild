@@ -1,10 +1,7 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction, MessageFlags, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } from 'discord.js'
-import config from '../../Configs/config.json' with { type: 'json' }
-import { executeQuery } from '../../Utils/SQL/databaseManager.js'
+import { SlashCommandBuilder, ChatInputCommandInteraction, MessageFlags } from 'discord.js'
 import { logger } from '../../Utils/Tools/customLogger.js'
-import { camelCaseToTitle } from '../../Utils/Tools/stringManager.js'
-
-let guildSettingsArray = []
+import { loadGuildSettings } from '../../Utils/SQL/guildSettingsManager.js'
+import sendMainMenuMessage from '../../Utils/Messages/mainMenuChangeMessage.js'
 
 export default {
     data: new SlashCommandBuilder()
@@ -15,65 +12,27 @@ export default {
      */
     async execute(interaction) {
         if (!interaction.isCommand()) return
-        console.log(interaction.command.id);
 
-        // Fetch current settings from the database
-        const guildId = interaction.guild.id;
-        const queryGuildExists = 'SELECT * FROM guilds WHERE guildId = ?';
-        var { rows } = await executeQuery(queryGuildExists, guildId);
+        try {
+            const guildId = interaction.guild.id
+            const guildSettings = await loadGuildSettings(guildId)
 
-        if (rows.length === 0) {
-            SettingsEmbed.setDescription('No settings found for this guild.\nPlease run the setup command first.');
-            return interaction.reply({ embeds: [SettingsEmbed], flags: MessageFlags.Ephemeral });
+            if (!guildSettings) {
+                logger("INFO", `No settings found for guild ${interaction.guild.name} (${interaction.guild.id}).`)
+                return interaction.reply({ content: 'No settings found for this guild.\nPlease run the setup command first.', flags: MessageFlags.Ephemeral })
+            }
+
+            logger("INFO", `Fetched settings for guild ${interaction.guild.name} (${interaction.guild.id})`)
+
+            // Send the main menu
+            await sendMainMenuMessage(interaction, guildSettings)
+            logger("INFO", `Sent settings menu for guild ${interaction.guild.name} (${interaction.guild.id})`)
+
+        } catch (error) {
+            logger("ERROR", `Failed to load guild settings for ${interaction.guild.name} (${interaction.guild.id}): ${error.stack}`)
+            return interaction.reply({ content: 'An error occurred while loading guild settings. Please try again later.', flags: MessageFlags.Ephemeral })
         }
-
-        const queryGuildConfig = 'SELECT * FROM guild_configs WHERE guildId = ?';
-        var { rows } = await executeQuery(queryGuildConfig, guildId);
-
-        if (rows.length === 0) {
-            logger("INFO", `No settings found for guild ${interaction.guild.name} (${interaction.guild.id}).`);
-            return interaction.reply({ content: 'No settings found for this guild.\nContact support for assistance.', flags: MessageFlags.Ephemeral });
-        }
-
-        logger("INFO", `Fetched settings for guild ${interaction.guild.name} (${interaction.guild.id})`);
-
-        let parsedSettings = Object.fromEntries(rows.map(row => [row.configType, JSON.parse(row.configSettings)]));
-        logger("INFO", `Parsed settings for guild ${interaction.guild.name} (${interaction.guild.id}).`);
-
-        guildSettingsArray[guildId] = parsedSettings;
-
-        // Create the Select Menu with the type of the configs as options to edit
-        const selectMenuOptions = new StringSelectMenuBuilder()
-
-        for (const [key, value] of Object.entries(parsedSettings)) {
-            selectMenuOptions.addOptions({
-                label: camelCaseToTitle(key),
-                description: `Edit the ${key} settings.`,
-                value: key
-            })
-        }
-
-        const selectMenu = new ActionRowBuilder()
-            .addComponents(
-                selectMenuOptions.setCustomId('select_guild_setting').setPlaceholder('Select a setting to edit...')
-            )
-        
-        const SettingsEmbed = new EmbedBuilder()
-            .setTitle('Change Guild Settings')
-            .setAuthor({ name: interaction.guild.name, iconURL: interaction.guild.iconURL() })
-            .setDescription('Modify the settings for this guild using the dropdown menu below.')
-            .setColor(0x47346E)
-            .setFooter({ text: config.developerInfo.footerText, iconURL: config.developerInfo.icon })
-            .setTimestamp()
-        
-        logger("INFO", `Prepared settings embed and select menu for guild ${interaction.guild.name} (${interaction.guild.id}).`);
-        await interaction.reply({ embeds: [SettingsEmbed], components: [selectMenu] });
-
     }
-}
-
-export function getGuildSettings(guildId) {
-    return guildSettingsArray[guildId] 
 }
 
 
